@@ -1,0 +1,754 @@
+Install Ubuntu Version: 
+22.04.* LTS
+*** DISABLE LVM partiton!!!***
+
+SPECIFIC TO VMWARE:
+===================
+Sometimes when we enable the shared folder in the VMWare, it does not automatically mounted to /mnt/hgfs
+To fix this problem:
+1. sudo nano /etc/fstab
+2. add the following line:
+vmhgfs-fuse /mnt/hgfs  fuse defaults,allow_other,_netdev   0   0
+3. reboot
+4. Check that the shared folder is there: vmware-hgfsclient
+5. Mount it manually:
+sudo vmhgfs-fuse .host:/ /mnt/hgfs/ -o allow_other -o uid=1000
+if it complains about no directory found, create it manually before executing the command.
+
+==============================================SETUP GITHUB============================================
+Creating a new Repo:
+--------------------
+0) install git:
+conda install -n <environment_name> git
+
+1) Go to a local directory
+>cd phdsh
+
+2) Configure Git if not done:
+> git config --global user.name "goshlive"
+> git config --global user.email "bravopinguin@gmail.com"
+
+3) Make a new Project
+> mkdir phd-privacy
+> cd phd-privacy
+> git init
+
+4) Currently the repo is empty. Add some file:
+> git add index.html
+
+5) Add more files at once:
+> git add --all
+
+6) Commit initial repo:
+> git commit -m "First commit"
+
+7) Check status:
+> git status --short
+
+8) Now, if we want to Push the repo to Github, then:
+> git remote add origin https://github.com/w3schools-test/hello-world.git		<-- example of Github Repo
+
+---------------------------
+Getting local copy of the Repo
+---------------------------
+1) To be able to perform authentication remotely, install:
+Refer: https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories#cloning-with-https-urls for more info.
+> sudo apt install gh -y
+
+2) Login remotely:
+> gh auth login			<-- use SSH as authentication and login to Browser
+
+When asked, access: https://github.com/login/device
+2) Clone from Git
+> gh repo clone goshlive/data-privacy
+
+3) Before making any change, make sure to 'PULL' it to get the latest one:
+> git pull origin
+
+4) Make some changes to the local copy (skipped), and add to stagging:
+> git add --all
+
+5) Now, commit the changes:
+> git commit -a -m "Updated index.html."
+
+6) Push the changes back
+> git push origin
+
+
+NOTE:***
+- to add a file, use: git add <file-name>
+- to ignore all untrack file or directory (including hidden files): git clean -f -d -x
+- to discard changes to a file: git restore <file-name>
+
+-----------------------------------------
+Add gitignore file
+-----------------------------------------
+1. nano .gitignore
+
+2. remove untracted files without deleting them:
+git rm -r --cached .ipynb_checkpoints
+git rm -r --cached __pycache__
+
+3. git add .gitignore
+4. git commit -m "Update .gitignore to exclude unwanted files"
+5. git push
+6. git status
+
+----------------------------
+undo git add to some files
+----------------------------
+git reset <path/to/file>
+
+or to exclude ".mat" files and rest them:
+find . -name "*.mat*" -exec git reset {} +
+
+-------------------------------------
+Add a tar.gz files which are too big
+-------------------------------------
+1. go to the directory where big files reside. Then do:
+tar -czvf mat_files.tar.gz *.mat
+2. rm *.mat
+3. git add mat_files.tar.gz
+
+------------------------------------------------------------------
+If GitHub complaining file too large. Install GitLargeFile System
+------------------------------------------------------------------
+1. sudo apt-get install git-lfs
+2. git lfs track "*.tar.gz"
+3. git add .gitattributes
+
+-----------------------------
+To revert back to a branch
+-----------------------------
+1. git reset --hard 26b0450
+2. git push origin main --force
+Please note, the above will remove all branches after the branch id: 26b0450, remotely in GitHub.
+
+-----------------------------------------
+Everytime you switch to different machine
+-----------------------------------------
+Do update to origin
+> git pull origin
+
+
+==============================================USING STANDALONE PC============================================
+CREATE JUPYTER ENV using CONDA:
+===============================
+1) Install Miniconda:
+	Go to directory: /opt/
+	# Download the 32-bit Miniconda installer
+	sudo wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86.sh -O miniconda.sh
+	# Execute the installation script
+	sudo bash miniconda.sh -b -p /opt/miniconda
+	sudo rm miniconda.sh
+	
+	edit ~/.bashrc
+		export CONDA_HOME=/opt/miniconda
+		export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin:$CONDA_HOME/bin
+	
+	source ~/.bashrc
+	
+2) Now create a conda environment like so:
+	conda create --name phdprivacy python=3.7
+	
+	The location is noramlly: /home/gosh/.conda/envs/phdprivacy
+3) Now edit the ~/.bashrc to use the new environment:
+
+===============================
+CREATE JUPYTER ENV using Pip
+===============================
+1) Just in case, need to check the python3 path:
+> python3
+After it's inside the Python Interpreter, then:
+>> import sys; print(sys. executable)
+/usr/bin/python3
+>> exit()
+
+2) install:
+> sudo apt install -y python3-venv
+
+3) go to working dir:
+> cd ~
+> cd phdsh
+> mkdir envs
+> cd envs
+
+4) create a new environment called 'client'
+> python3 -m venv client
+
+5) activate the env:
+> source client/bin/activate
+
+6) set jupyter notebook default directory:
+> pip install jupyter
+> jupyter notebook --generate-config
+Writing default config to: /home/gosh/.jupyter/jupyter_notebook_config.py
+
+7) Edit the config:
+> sudo nano  /home/gosh/.jupyter/jupyter_notebook_config.py
+Search for: # c.ServerApp.notebook_dir, and change to:
+c.ServerApp.notebook_dir = '/home/gosh/phdsh'
+
+8) Create a file in the home dir:
+>sudo nano n1.sh
+#!/bin/bash
+source /home/gosh/phdsh/envs/client/bin/activate
+jupyter notebook --port=9090 --no-browser --ServerApp.token=''
+
+9) change it to be executable:
+>sudo chmod +x n1.sh
+
+10) add it to the profile:
+> sudo nano ~/.bashrc
+alias n1='source n1.sh'
+> source ~/.bashrc
+
+11) run Jupyter notebook
+> n1
+
+12) connect from client PC:
+ssh -L 9090:localhost:9090 gosh@192.168.220.20
+
+13) access it:
+http://localhost:9090/tree?
+
+
+==============================================USING CLUSTERS============================================
+Netwroking for Master
+=======================
+Set each node to have Static IP.
+1) If using VMWare, just use one Network in the "Virtual Network Editor"
+Just use NAT, and remove the others
+Edit Settings, and change the Subnet IP: 192.168.100.0
+2) Login to a VM using DHCP connection enabled, and get the Gateway IP-address
+execute the following: ip route
+check the ip with 'default', like so:
+
+gosh@ubuntums:~$ ip route
+default via 192.168.100.2 dev ens33 proto dhcp src 192.168.100.128 metric 100
+192.168.100.0/24 dev ens33 proto kernel scope link src 192.168.100.128 metric 100
+192.168.100.2 dev ens33 proto dhcp scope link src 192.168.100.128 metric 100
+
+Gateway IP-address = 192.168.100.2
+
+3) With the Gateway IP address information, edit the following:
+sudo nano /etc/netplan/00*
+
+Change:
+# This is the network config written by 'subiquity'
+network:
+  ethernets:
+    ens33:
+      dhcp4: true
+  version: 2
+	
+To:
+# This is the network config written by 'subiquity'
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ens33:
+      dhcp4: no
+      addresses: [192.168.100.10/24]
+      gateway4: 192.168.100.2
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+
+**IF USING VIRTUALBOX, DO THIS INSTEAD**:
+a. In the VB, Setup Host-only Network Manager, by auto-generating the Adapter Configuration (make sure DHCP is enabled)
+b. Go to the specific VM settings, and make sure it has 2 Network Adapter enabled
+c. Do change the following:
+Get the two adapter lists using command: ip route
+For example: it is enp0s3 (for the NAT) & enp0s8 (for the host-only)
+
+Change the network config in the /etc/netplan/00* as follows:
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+	enp0s3:
+	  dhcp4: true
+    enp0s8:
+      dhcp4: no
+      addresses: [192.168.100.10/24]
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+		
+apply the changes using comman:
+sudo netplan apply
+
+4) Change /etc/hosts and /etc/hostname
+change should take effect immediately
+
+--------------
+For VIRTUALBOX
+--------------
+Set C:\Program Files\Oracle\VirtualBox as Windows Path
+To see all vms:
+>vboxmanage list vms
+
+To run VM headless
+>vboxheadless -startvm "Ubuntu Server"
+
+To Shutdown
+>VBoxManage controlvm "Ubuntu Server" acpipowerbutton
+
+1) sudo apt install open-vm-tools (only for VMware)
+
+2) change user password:
+user: gosh
+sudo passwd ubuntu (sembiran)
+
+3) change to authentication
+sudo nano /etc/ssh/sshd_config
+change to: 
+	PasswordAuthentication yes
+run:
+	sudo service sshd restart
+	
+------------
+Setup SSH
+------------
+1) sudo apt-get install openssh-server openssh-client
+2) ssh-keygen -t rsa -P ""
+	
+==============
+Instal JDK
+==============
+Remove if required:
+-------------------
+sudo apt remove --purge default-jdk
+sudo apt autoremove --purge
+
+Option 1:
+----------
+sudo apt update
+sudo apt install default-jdk
+
+NOTE: do this to all master&slaves
+
+Option 2: (USE THIS!!!!)
+-----------------------
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:linuxuprising/java -y
+sudo apt update
+sudo apt-get install openjdk-8-jdk-headless
+java -version
+
+Option 3:
+----------
+tar and move them to '/ur/lib/jvm':
+	sudo mkdir -p /usr/lib/jvm && sudo tar zxvf jdk-8u202-linux-x64.tar.gz -C /usr/lib/jvm
+update system
+	sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/bin/java" 1
+change default java
+	sudo update-alternatives --config java
+check java version
+	java -version
+
+5) change hosts:
+Make sure the final /etc/hosts looks like so:
+127.0.0.1       	localhost
+192.168.100.10   	master			<-- no address like 127.0.1.1 (it will cause problem)
+
+192.168.100.11   	slave01
+192.168.100.12   	slave02
+192.168.100.13   	slave03
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+==================
+Instal Spark
+==================
+1) Get Spark: 
+	wget https://dlcdn.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3-scala2.13.tgz
+2) tar xvf spark*
+3) rm -R spark*.tgz
+   sudo mv spark* /opt/spark
+4) sudo nano ~/.bashrc
+5) add:
+	export SPARK_HOME=/opt/spark
+	export PATH=$PATH:/home/gosh/.local/bin:$SPARK_HOME/bin
+6) source ~/.bashrc
+7) check which Java:
+	which java
+8) Set temp dirs:
+   >cd /opt/spark/conf
+   >cp spark-env.sh.template spark-env.sh
+   >nano spark-env.sh
+   >add:
+	
+	#export SPARK_LOCAL_DIRS=/home/gosh/spark_dirs/localdirs/dir1,/home/gosh/spark_dirs/localdirs/dir2,/home/gosh/spark_dirs/localdirs/dir3
+	#export SPARK_WORKER_DIR=/home/gosh/spark_dirs/workerdir
+	#export SPARK_LOG_DIR=/home/gosh/spark_dirs/logs
+	#export SPARK_PID_DIR=/home/gosh/spark_dirs/pidtemp
+
+	#the below need to set in the Driver only, no need to be set in the worker PCs
+	export SPARK_MASTER_HOST=master
+	export JAVA_HOME=/usr
+	
+	#IMPORTANT!!!!! please note, this will impact the executor, whether it's executing or not. 
+	# by default we use a driver and 3 workers, but driver will NOT executes job at the same time
+	#In the Spark UI, check the memory allocation. If the memory is less then the configured memory in this config, it won't EVER executing!
+	export SPARK_DRIVER_MEMORY=6G
+	export SPARK_EXECUTOR_MEMORY=8G
+	export SPARK_EXECUTOR_CORES=6
+
+9) Add workers:
+cp /opt/spark/conf/workers.template /opt/spark/conf/workers
+nano /opt/spark/conf/workers
+
+localhost
+192.168.127.101
+192.168.127.102
+192.168.127.103
+
+
+10) Optional:
+download Scala
+	wget https://downloads.lightbend.com/scala/2.12.8/scala-2.12.8.tgz
+Unzip:
+	tar xvf scala-2.12.8.tgz
+edit:
+	sudo nano ~/.bashrc
+add:
+	export SCALA_HOME=/home/ubuntu/scala-2.12.8
+	export PATH=$PATH:/home/ubuntu/scala-2.12.8/bin
+run:
+	source ~/.bashrc
+check:
+	scala -version
+	
+==================================
+SETUP HADOOP
+==================================
+1. wget https://archive.apache.org/dist/hadoop/core/stable/hadoop-3.4.0.tar.gz
+2. tar -xvf hadoop-3.4.0.tar.gz
+3. rm *tar.gz
+4. sudo mv hadoop-3.4.0  /opt/hadoop
+5. nano /opt/hadoop/etc/hadoop/hadoop-env.sh
+6. export JAVA_HOME=/usr
+7. nano ~/.bashrc
+	export SPARK_HOME=/opt/spark
+	export HADOOP_HOME=/opt/hadoop
+	export PATH=$PATH:/home/gosh/.local/bin:$SPARK_HOME/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+8. source ~/.bashrc
+9. sudo mkdir /opt/hadoop-data
+10. sudo mkdir /opt/hadoop-data/nameNode
+11. sudo mkdir /opt/hadoop-data/dataNode
+12. sudo chown gosh:gosh -R /opt/hadoop-data
+
+-----------------------------------------
+Setup Hadoop configuration
+-----------------------------------------
+1. sudo nano /opt/hadoop/etc/hadoop/core-site.xml
+<configuration>
+<property>
+<name>fs.default.name</name>
+<value>hdfs://master:8020</value>
+</property>
+</configuration>
+
+2. sudo nano /opt/hadoop/etc/hadoop/hdfs-site.xml
+<configuration>
+<property>
+<name>dfs.namenode.name.dir</name>
+<value>/opt/hadoop-data/nameNode</value>
+</property>
+<property>
+<name>dfs.namenode.data.dir</name>
+<value>/opt/hadoop-data/dataNode</value>
+</property>
+<property>
+<name>dfs.replication</name>
+<value>2</value>
+</property>
+</configuration>
+
+3. sudo nano /opt/hadoop/etc/hadoop/workers
+localhost
+192.168.127.101
+192.168.127.102
+192.168.127.103
+
+4. sudo nano /opt/hadoop/etc/hadoop/yarn-site.xml
+<configuration>
+<property>
+	<name>yarn.resourcemanager.hostname</name>
+	<value>master</value>
+</property>
+<property>
+<name>yarn.nodemanager.resource.memory-mb</name>
+<value>36864</value>
+</property>
+<property>
+<name>yarn.scheduler.maximum-allocation-mb</name>
+<value>12288</value>
+</property>
+<property>
+<name>yarn.scheduler.minimum-allocation-mb</name>
+<value>1024</value>
+</property>
+<property>
+<name>yarn.scheduler.maximum-allocation-vcores</name>
+<value>8</value>
+</property>
+</configuration>
+
+5. sudo nano /opt/hadoop/etc/hadoop/mapred-site.xml
+<configuration>
+<property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value>
+</property>
+<property>
+<name>yarn.app.mapreduce.am.resource.mb</name>
+<value>8192</value>
+</property>
+<property>
+<name>mapreduce.map.memory.mb</name>
+<value>8192</value>
+</property>
+<property>
+<name>mapreduce.reduce.memory.mb</name>
+<value>8192</value>
+</property>
+</configuration>
+
+==================
+Install Python
+==================
+Install pip:
+	sudo apt install python3.10 python3.10-venv
+	
+Install Python dependencies (in all nodes & everytime installing in master, then must install in slaves as well):
+	sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
+	sudo apt install python3.10-pip
+	
+------------------
+If Python cannot be found after install
+------------------
+> which python3.10
+/usr/bin/python3.10
+sudo ln -sfn /usr/bin/python3.10 /usr/bin/python3
+
+------------------
+If python always updated to the newer version
+------------------
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+
+Create a requirements.txt with the following content:
+> nano requirements.txt
+numpy
+pandas
+scikit-learn
+scipy
+matplotlib
+---------------the following needed by RENT library:
+minepy
+hoggorm
+hoggormplot
+seaborn
+ReliefF
+torch
+bayesian-optimization
+
+> add this to bashrc
+nano ~/.bashrc
+export PATH=$PATH:/home/gosh/.local/bin
+source ~/.bashrc
+
+Execute using the following command: 
+pip3 install -r requirements.txt
+
+Check version:
+python3 -c "import matplotlib; print(matplotlib.__version__)"
+
+==============================================SETUP FOR SLAVE============================================
+1) Install Ubuntu into a slave PC or clone from the master VM
+2) ONCE COPIED SUCCESSFULLY!!! do the following:
+a) sudo apt-get install openssh-server openssh-client
+b) ssh-keygen -t rsa -P ""
+c) Copy: 
+	ssh-copy-id -i ~/.ssh/id_rsa.pub user@slave
+	and also gosh@localhost
+	
+For Master:
+d) cp /opt/spark/conf/workers.template /opt/spark/conf/workers
+e) nano /opt/spark/conf/workers
+	add all private ip-address of the master & slaves
+
+For All:
+f) cp /opt/spark/conf/spark-defaults.conf.template /opt/spark/conf/spark-defaults.conf
+nano /opt/spark/conf/spark-defaults.conf
+
+#spark.master yarn
+#spark.yarn.appMasterEnv.PYSPARK_PYTHON=/usr/bin/python3
+
+spark.network.timeout 50000
+spark.executor.heartbeatInterval 5000
+spark.worker.timeout 5000
+
+scp /opt/spark/conf/spark-defaults.conf gosh@slave01:/opt/spark/conf/spark-defaults.conf
+
+------------------
+Install Jupyter (Master)
+------------------
+1) create environment:
+> sudo apt install python3 python3-venv
+> cd ~
+> cd phdsh
+> mkdir envs
+> cd envs
+> python3 -m venv dataprivacy
+
+5) activate the env:
+source ~/phdsh/envs/dataprivacy/bin/activate
+pip3 install notebook
+pip3 install -r requirements.txt
+
+2) test:
+	pyspark
+3) Update the profile:
+	> nano ~/.bashrc
+	Then add:
+		export SCALA_HOME=/home/ubuntu/scala-2.12.8
+		export PATH=$PATH:/home/ubuntu/scala-2.12.8/bin
+
+		export SPARK_HOME=/opt/spark
+		export HADOOP_HOME=/opt/hadoop
+		export PATH=$PATH:/home/gosh/.local/bin:$SPARK_HOME/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
+		export PYSPARK_PYTHON=/usr/bin/python3
+		export PYSPARK_DRIVER_PYTHON='jupyter'
+		export PYSPARK_DRIVER_PYTHON_OPTS="notebook --NotebookApp.notebook_dir=/home/gosh --NotebookApp.token='' --no-browser --port=8889"
+
+		export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
+		export LD_LIBRARY_PATH=$HADOOP_HOME/lib/native:$LD_LIBRARY_PATH
+
+		alias s1='/opt/spark/sbin/stop-all.sh'
+		alias s2='/opt/spark/sbin/start-all.sh'
+		alias s3='pyspark --conf spark.eventLog.enabled=true --master spark://192.168.225.10:7077'
+		#alias s3='pyspark --conf spark.eventLog.enabled=true --deploy-mode cluster'
+
+		alias s7='source stop-all.sh'
+		alias s8='source start-all.sh'
+		alias s9='source s9.sh'
+		
+	>cd ~
+	Now, create a new bash script, call it s9.sh in the home dir:
+		#!/bin/bash
+		# Call s* in order
+		# source ~/phdsh/envs/dataprivacy/bin/activate
+		s1
+		s2
+		s3
+	>chmod +x s9.sh
+	
+Copy: 
+	ssh-copy-id -i ~/.ssh/id_rsa.pub user@slave
+	and also gosh@localhost
+
+4) source ~/.bashrc
+5) logout
+6) login again and do:
+	pyspark
+	
+	it should start the jupyter as:
+	http://localhost:8889/?token=8369224809962277c1361cbb55d2e1da19a1b091b0b6837e
+7) connect via local PC: 
+	ssh -L 8889:localhost:8889 gosh@192.168.100.10
+	
+8) open browser and go to the link to see the Jupyter Notebook
+9) go to link: http://ec2-16-171-41-228.eu-north-1.compute.amazonaws.com:4040 to see the execution jobs using Spark Clusters
+
+10) check Hadoop:
+http://192.168.225.10:9870
+
+11) check Yarn:
+http://192.168.225.10:8088
+
+12) hdfs dfsadmin -report
+
+13) Hadoop config needs to be replicated across clusters. In case need to change Hadoop configuration and then copying to all nodes, do:
+scp /opt/hadoop/etc/hadoop/* gosh@slave01:/opt/hadoop/etc/hadoop/.
+
+
+=========================================================================================
+Below is to Setup Clusters on Kubernetes with Dask Distributed Computing Framework
+=========================================================================================
+Intstall Kubernetes:
+--------------------
+We will install Kubernetes on existing VMWare (1 Master, 3 Nodes).
+First, we need to install kubectl, kubeadm, kubelet:
+1. curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+2. Install kubectl:
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+3. Test to ensure the version you installed is up-to-date:
+kubectl version --client
+4. Check that all nodes (including master) have unique UUID (otherwise Kubernetes installation may failed):
+sudo cat /sys/class/dmi/id/product_uuid
+5. There are ports need to be open/not blocked by firewall, such as 6443:
+Test whether Firewall is active or not:
+sudo ufw status
+If not active, then good. We can simulate a listening port like so:
+sudo nc -l 6443
+And then on the same machine:
+nc 127.0.0.1 6443 -v
+6. TO install kubeadm and all other, use the following alternatively:
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+Enable the kubelet service before running kubeadm:
+sudo systemctl enable --now kubelet 
+7. Initialize the Kubernetes Master Node: On the Master node, run:
+sudo kubeadm init --apiserver-advertise-address=192.168.127.100 --pod-network-cidr=10.244.0.0/16
+The network 10.244.0.0/16, is a Pod Network created inside the Kubernetes cluster to facilitate communication among Pod (the smallest deployable unit in Kubernetes across cluster). Kubernetes relies on CNI (container network interface) plugin to manage it. Example CNI:
+Flannel (default), Calico, Weave, or Cillium
+8. TO BE CONTINIUED
+
+===========================================
+Install Dask Cluster without Containerized
+===========================================
+1. Install Dask on every machine: 
+pip install dask
+sudo apt install python3-distributed
+pip install --upgrade numexpr bottleneck
+pip install --upgrade dask distributed tornado
+2. Run Scheduler on the Master Node:
+dask scheduler
+It will print: Scheduler at: tcp://192.168.127.100:8786
+3. From each Slave, connet to it:
+dask worker tcp://192.168.127.100:8786
+
+
+Run Jupyter in any node to connect to the Dask Cluster
+------------------------------------------------------
+1. Install it if not: pip install jupyter
+2. Run it:
+jupyter notebook --no-browser --ip=0.0.0.0 --port=8889
+3. Create a new Notebook file and try to connect:
+
+For Python
+----------
+pip install --upgrade pip
+pip install imbalanced-learn
+pip install distinctipy
+pip install tensorflow
+pip install autorank
+pip install dask-ml
+pip install --upgrade matplotlib
+
+==========================
+Miscelleneaus UNIX comman
+==========================
+1. Zip current folder but excluding sub folders
+zip -r output.zip . -x "*/"
